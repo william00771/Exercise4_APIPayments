@@ -1,0 +1,58 @@
+﻿@using System.Globalization;
+
+@using Exercise4_APIPayments.Models;
+@model Product
+
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Buy now</h1>
+    <p>Choose a payment option down below</a>.</p>
+
+    <h4>Total Price: @Model.Price</h4>
+</div>
+<p>Paypal account: sb-8uvbo24947017@personal.example.com</p>
+<p>Paypal password: admin123</p>
+
+<!-- Replace "test" with your own sandbox Business account app client ID -->
+<script src="https://www.paypal.com/sdk/js?client-id=AbtCCwhmY4X_wONiJl8ySGdD4iwGxyC0BXtldMKoHzInfotdkp6dqOkDlslJnK6r-wlc-F2KXxQHJDnU&currency=USD"></script>
+<!-- Set up a container element for the button -->
+<div style="width: 20vw;" id="paypal-button-container"></div>
+
+@section Scripts{
+    <script>
+        let _totalCost = @Html.Raw(Model.Price.ToString(CultureInfo.InvariantCulture)); //Använder .ToString(CultureInfo.InvariantCulture) aftersom paypal bara accepterar "." och inte "," mellan siffrorna
+
+        paypal.Buttons({
+            // Sets up the transaction when a payment button is clicked
+            createOrder: (data, actions) => {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: _totalCost // Can also reference a variable or function
+                        }
+                    }]
+                });
+            },
+            // Finalize the transaction after payer approval
+            onApprove: (data, actions) => {
+                return actions.order.capture().then(function (orderData) {
+                    // Successful capture! For dev/demo purposes:
+                    console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                    const transaction = orderData.purchase_units[0].payments.captures[0];
+                        var url = '@Url.Action("TransactionComplete", "Home", new { })'; //"ACTION NAME", "CONTROLLER NAME", "CAN PASS OBJECT!"
+                        window.location.href = url;
+
+
+                    // When ready to go live, remove the alert and show a success message within this page. For example:
+                    // const element = document.getElementById('paypal-button-container');
+                    // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                    // Or go to another URL:  actions.redirect('thank_you.html');
+                });
+            }
+        }).render('#paypal-button-container');
+    </script>
+}
